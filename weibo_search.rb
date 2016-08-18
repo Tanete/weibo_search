@@ -40,10 +40,10 @@ def weibo_search(search_word, page_min, page_max, db)
     (0..9).each do |i|
       info = j_res["cards"][i]
       if info != nil
+        mblog = info["card_group"][0]['mblog']
         mid = mblog['id']
         text = mblog['text']
         source = mblog['source']
-        mblog = info["card_group"][0]['mblog']
         created_at = TimeIssue.standardize(mblog['created_at'])
         puts "#{page}-#{i}: #{created_at} #{source} #{text} #{mid}"
         save_data(db, mid, created_at, text, source)
