@@ -1,7 +1,7 @@
 # encoding: utf-8
 require 'httparty'
 require "sequel"
-
+require_relative 'time_issue'
 class HTTPartyProxy
   include HTTParty
   # http_proxy '58.59.68.91', 9797
@@ -40,11 +40,11 @@ def weibo_search(search_word, page_min, page_max, db)
     (0..9).each do |i|
       info = j_res["cards"][i]
       if info != nil
-        mblog = info["card_group"][0]['mblog']
-        created_at = mblog['created_at']
-        source = mblog['source']
-        text = mblog['text']
         mid = mblog['id']
+        text = mblog['text']
+        source = mblog['source']
+        mblog = info["card_group"][0]['mblog']
+        created_at = TimeIssue.standardize(mblog['created_at'])
         puts "#{page}-#{i}: #{created_at} #{source} #{text} #{mid}"
         save_data(db, mid, created_at, text, source)
       end
@@ -69,4 +69,13 @@ def save_data(db, mid, created_at, text, source)
   end
 end
 
-weibo_search("简书",1,20, db)
+weibo_search("简书",1,1, db)
+# str_1 = '今天 20:46'
+# str_2 = '19分钟前'
+# str_3 = '08-18 23:11'
+# puts str_1
+# puts str_2
+# puts str_3
+# puts TimeIssue.standardize(str_1)
+# puts TimeIssue.standardize(str_2)
+# puts TimeIssue.standardize(str_3)
