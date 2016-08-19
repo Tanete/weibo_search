@@ -8,5 +8,6 @@ Very simple weibo.com posts search script.
 3. run `ruby init_database.rb`
 4. run `ruby weibo_search.rb`
 5. use `crontab` to run this script periodically
+  * `*/42 * * * * ruby /home/path_to_script/weibo_search.rb`
 ## Notes
 * Better not try to use multithreading, or sina will ban your ip
