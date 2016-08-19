@@ -1,8 +1,11 @@
 # encoding: utf-8
 require 'httparty'
 require "sequel"
+require 'logger'
 require_relative 'pinyin_translate.rb'
 
+$LOG = Logger.new('../logs/log.log', 10, 1024000)
+$LOG.level = Logger::DEBUG
 class HTTPartyProxy
   include HTTParty
   # http_proxy '58.59.68.91', 9797
@@ -10,9 +13,10 @@ class HTTPartyProxy
   # http_proxy '120.52.73.96', 8080
 end
 
-DB = Sequel.sqlite('weibo.db')
+@database = Sequel.sqlite('weibo.db')
 
 def weibo_search(search_word, page_min, page_max)
+  $LOG.info("Searching #{search_word} in page #{page_min} ~ #{page_max}")
   escape_s_word = URI::escape(search_word)
   table_name = trans_pinyin(search_word).to_sym
   (page_min..page_max).each do |page|
@@ -23,15 +27,19 @@ def weibo_search(search_word, page_min, page_max)
     # retry for network issue
     if j_res["cards"].nil?
       puts "Fixing nil..."
+      $LOG.error("#{search_word} page #{page} is nil, fixing...")
       5.times do |x|
         puts "try #{x}..."
+        $LOG.warn("try #{x}...")
         sleep 2
         j_res = HTTPartyProxy.get(search_url).parsed_response
         if !j_res["cards"].nil?
+          $LOG.info("fixed")
           break
         end
       end
       if j_res["cards"].nil?
+        $LOG.error("#{search_word} page #{page} is still nil, skipped")
         next
       end
     end
@@ -52,7 +60,7 @@ def weibo_search(search_word, page_min, page_max)
         user_gender       = user['gender']
         user_fansNum      = user['fansNum']
 
-        puts "#{page}-#{i}: #{created_timestamp} #{source} #{content} #{mid}"
+        # puts "#{page}-#{i}: #{created_timestamp} #{source} #{content} #{mid}"
         save_data(table_name, mid, created_timestamp, content, source, user_id, user_name,
                                     user_gender, user_status_count, user_fansNum)
       end
@@ -62,8 +70,7 @@ end
 
 def save_data(table_name, mid, created_timestamp, content, source, user_id, user_name,
                                   user_gender, user_status_count, user_fansNum)
-
-  db = DB[table_name]
+  db = @database[table_name]
   # populate the table
   begin
     db.insert(:mid => mid,
@@ -75,10 +82,19 @@ def save_data(table_name, mid, created_timestamp, content, source, user_id, user
               :user_gender => user_gender,
               :user_status_count => user_status_count,
               :user_fansNum => user_fansNum)
+    $LOG.info("post: #{mid} by #{user_name} added")
   rescue Sequel::UniqueConstraintViolation
+    $LOG.info("post: #{mid} by #{user_name} duplicated")
     puts "Duplicate post, not added"
   end
 end
 
+
+# threads = []
+# threads << Thread.new { weibo_search("简书", 1, 100) }
+# threads << Thread.new { weibo_search("豆瓣", 1, 100) }
+# threads.each { |t| t.join }
 weibo_search("简书", 1, 100)
+$LOG.info("Searching 简书 finished")
 weibo_search("豆瓣", 1, 100)
+$LOG.info("Searching 豆瓣 finished")
