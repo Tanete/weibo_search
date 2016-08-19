@@ -1,12 +1,12 @@
 # encoding: utf-8
 require 'httparty'
 require "sequel"
-require_relative 'time_issue'
+
 class HTTPartyProxy
   include HTTParty
   # http_proxy '58.59.68.91', 9797
   # http_proxy  '183.196.9.132', 2226
-  http_proxy '120.52.73.96', 8080
+  # http_proxy '120.52.73.96', 8080
 end
 
 DB = Sequel.sqlite('weibo.db')
@@ -40,42 +40,42 @@ def weibo_search(search_word, page_min, page_max, db)
     (0..9).each do |i|
       info = j_res["cards"][i]
       if info != nil
-        mblog = info["card_group"][0]['mblog']
-        mid = mblog['id']
-        text = mblog['text']
-        source = mblog['source']
-        created_at = TimeIssue.standardize(mblog['created_at'])
-        puts "#{page}-#{i}: #{created_at} #{source} #{text} #{mid}"
-        save_data(db, mid, created_at, text, source)
+        mblog             = info["card_group"][0]['mblog']
+        mid               = mblog['id']
+        created_timestamp = Time.at(mblog['created_timestamp'])
+        content              = mblog['text']
+        source            = mblog['source']
+        user              = mblog['user']
+        user_id           = user['id']
+        user_name         = user['screen_name']
+        user_status_count = user['statuses_count']
+        user_gender       = user['gender']
+        user_fansNum      = user['fansNum']
+
+        puts "#{page}-#{i}: #{created_timestamp} #{source} #{content} #{mid}"
+        save_data(db, mid, created_timestamp, content, source, user_id, user_name,
+                                    user_gender, user_status_count, user_fansNum)
       end
     end
   end
 end
 
-# threads = []
-# threads << Thread.new { weibo_search("简书",1,20) }
-# threads << Thread.new { weibo_search("简书",21,40) }
-# threads << Thread.new { weibo_search("简书",41,60) }
-# threads << Thread.new { weibo_search("简书",61,80) }
-# threads << Thread.new { weibo_search("简书",81,100) }
-# threads.each { |t| t.join }
-
-def save_data(db, mid, created_at, text, source)
+def save_data(db, mid, created_timestamp, content, source, user_id, user_name,
+                                  user_gender, user_status_count, user_fansNum)
   # populate the table
   begin
-    db.insert(:mid => mid, :created_at => created_at, :text => text, :source => source)
+    db.insert(:mid => mid,
+              :created_timestamp => created_timestamp,
+              :content => content,
+              :source => source,
+              :user_id => user_id,
+              :user_name => user_name,
+              :user_gender => user_gender,
+              :user_status_count => user_status_count,
+              :user_fansNum => user_fansNum)
   rescue Sequel::UniqueConstraintViolation
     puts "Duplicate post, not added"
   end
 end
 
-weibo_search("简书",1,1, db)
-# str_1 = '今天 20:46'
-# str_2 = '19分钟前'
-# str_3 = '08-18 23:11'
-# puts str_1
-# puts str_2
-# puts str_3
-# puts TimeIssue.standardize(str_1)
-# puts TimeIssue.standardize(str_2)
-# puts TimeIssue.standardize(str_3)
+weibo_search("简书",1,100, db)
