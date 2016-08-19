@@ -3,8 +3,8 @@ require 'httparty'
 require "sequel"
 require 'logger'
 require_relative 'pinyin_translate.rb'
-
-$LOG = Logger.new('../logs/log.log', 10, 1024000)
+file_path = File.expand_path("..")
+$LOG = Logger.new("#{file_path}/logs/log.log", 10, 1024000)
 $LOG.level = Logger::DEBUG
 class HTTPartyProxy
   include HTTParty
