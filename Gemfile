@@ -1,4 +1,6 @@
 source 'https://rubygems.org'
 
-gem 'httparty', '~> 0.14.0'
-gem 'sequel', '~> 4.37.0'
+gem 'httparty'
+gem 'sequel'
+gem 'sqlite3'
+gem 'ruby-pinyin'

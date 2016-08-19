@@ -1,6 +1,7 @@
 # encoding: utf-8
 require 'httparty'
 require "sequel"
+require_relative 'pinyin_translate.rb'
 
 class HTTPartyProxy
   include HTTParty
@@ -10,11 +11,10 @@ class HTTPartyProxy
 end
 
 DB = Sequel.sqlite('weibo.db')
-db = DB[:mblog]
 
-def weibo_search(search_word, page_min, page_max, db)
+def weibo_search(search_word, page_min, page_max)
   escape_s_word = URI::escape(search_word)
-
+  table_name = trans_pinyin(search_word).to_sym
   (page_min..page_max).each do |page|
     puts page
     search_url = "http://m.weibo.cn/page/pageJson?containerid=&containerid=100103type%3D2%26q%3D#{escape_s_word}&type=wb&queryVal=#{escape_s_word}A6&luicode=10000011&lfid=100103type%3D1%26q%3D&title=#{escape_s_word}&v_p=11&ext=&fid=100103type%3D2%26q%3D#{escape_s_word}&uicode=10000011&next_cursor=&page=#{page}"
@@ -53,15 +53,17 @@ def weibo_search(search_word, page_min, page_max, db)
         user_fansNum      = user['fansNum']
 
         puts "#{page}-#{i}: #{created_timestamp} #{source} #{content} #{mid}"
-        save_data(db, mid, created_timestamp, content, source, user_id, user_name,
+        save_data(table_name, mid, created_timestamp, content, source, user_id, user_name,
                                     user_gender, user_status_count, user_fansNum)
       end
     end
   end
 end
 
-def save_data(db, mid, created_timestamp, content, source, user_id, user_name,
+def save_data(table_name, mid, created_timestamp, content, source, user_id, user_name,
                                   user_gender, user_status_count, user_fansNum)
+
+  db = DB[table_name]
   # populate the table
   begin
     db.insert(:mid => mid,
@@ -78,4 +80,5 @@ def save_data(db, mid, created_timestamp, content, source, user_id, user_name,
   end
 end
 
-weibo_search("简书",1,100, db)
+weibo_search("简书", 1, 100)
+weibo_search("豆瓣", 1, 100)
