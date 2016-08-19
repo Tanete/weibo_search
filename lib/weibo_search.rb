@@ -18,6 +18,7 @@ end
 
 def weibo_search(search_word, page_min, page_max)
   $LOG.info("Searching #{search_word} in page #{page_min} ~ #{page_max}")
+  @added = @skipped = @duplicated = 0
   escape_s_word = URI::escape(search_word)
   table_name = trans_pinyin(search_word).to_sym
   (page_min..page_max).each do |page|
@@ -41,6 +42,7 @@ def weibo_search(search_word, page_min, page_max)
       end
       if j_res["cards"].nil?
         $LOG.error("#{search_word} page #{page} is still nil, skipped")
+        @skipped += 1
         next
       end
     end
@@ -84,18 +86,23 @@ def save_data(table_name, mid, created_timestamp, content, source, user_id, user
               :user_status_count => user_status_count,
               :user_fansNum => user_fansNum)
     $LOG.info("post: #{mid} by #{user_name} added")
+    @added += 1
   rescue Sequel::UniqueConstraintViolation
     $LOG.info("post: #{mid} by #{user_name} duplicated")
     puts "Duplicate post, not added"
+    @duplicated += 1
   end
 end
 
 
-# threads = []
-# threads << Thread.new { weibo_search("简书", 1, 100) }
-# threads << Thread.new { weibo_search("豆瓣", 1, 100) }
-# threads.each { |t| t.join }
-weibo_search("简书", 1, 100)
-$LOG.info("Searching 简书 finished")
-weibo_search("豆瓣", 1, 100)
-$LOG.info("Searching 豆瓣 finished")
+search_word = "简书"
+weibo_search(search_word, 1, 100)
+ending_1 = "Searching #{search_word} finished | added-#{@added} duplicated-#{@duplicated} skipped-#{@skipped}"
+puts ending_1
+$LOG.info(ending_1)
+
+search_word = "豆瓣"
+weibo_search(search_word, 1, 100)
+ending_2 = "Searching #{search_word} finished | added-#{@added} duplicated-#{@duplicated} skipped-#{@skipped}"
+puts ending_2
+$LOG.info(ending_2)
