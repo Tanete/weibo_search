@@ -14,7 +14,7 @@ class HTTPartyProxy
   # http_proxy '120.52.73.96', 8080
 end
 
-@database = Sequel.sqlite('weibo.db')
+@database = Sequel.sqlite("#{file_path}/db/weibo.db")
 
 def weibo_search(search_word, page_min, page_max)
   $LOG.info("Searching #{search_word} in page #{page_min} ~ #{page_max}")

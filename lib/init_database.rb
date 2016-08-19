@@ -1,9 +1,10 @@
 # encoding: utf-8
 require "sequel"
 require_relative 'pinyin_translate.rb'
+file_path = File.expand_path("..", File.dirname(__FILE__))
 
 # connect to databse
-DB = Sequel.sqlite('weibo.db')
+DB = Sequel.sqlite("#{file_path}/db/weibo.db")
 
 # create an items table
 def create_table(table_name)
