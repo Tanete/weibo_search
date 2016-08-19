@@ -5,8 +5,7 @@ Very simple weibo.com posts search script.
 ## Usage
 1. git clone
 2. bundle install
-3. run `sqlite weibo.db`
-4. run `ruby init_database.rb`
-5. run `ruby weibo_search.rb`
+3. run `ruby init_database.rb`
+4. run `ruby weibo_search.rb`
 ## Notes
 * Better not try to use multithreading, or sina will ban your ip

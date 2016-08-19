@@ -42,7 +42,7 @@ def weibo_search(search_word, page_min, page_max, db)
       if info != nil
         mblog             = info["card_group"][0]['mblog']
         mid               = mblog['id']
-        created_timestamp = Time.at(mblog['created_timestamp'])
+        created_timestamp = Time.at(mblog['created_timestamp']).localtime("+08:00")
         content              = mblog['text']
         source            = mblog['source']
         user              = mblog['user']
